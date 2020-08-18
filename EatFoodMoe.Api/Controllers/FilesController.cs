@@ -2,22 +2,25 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 
 namespace EatFoodMoe.Api.Controllers
 {
-    [Route("api/file")]
+    [Route("api")]
     [ApiController]
     public class FilesController:ControllerBase
     {
-        [HttpPost]
+        [HttpPost("file")]
         public IActionResult UpLoad([FromForm] EatFoodIFilesInfo eatFoodIFilesInfo) 
         {
-
+             Stream a=eatFoodIFilesInfo.File.OpenReadStream();
             return Ok();
+            
         }
-
+        
 
     }
 }

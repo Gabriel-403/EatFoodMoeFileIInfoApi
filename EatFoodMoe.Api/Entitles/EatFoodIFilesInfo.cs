@@ -9,7 +9,7 @@ namespace EatFoodMoe.Api.Entitles
     public class EatFoodIFilesInfo
     {
         public string Title { get; set; }
-        public List<IFormFile> Files { get; set; }
+        public IFormFile File { get; set; }
      
 
 
