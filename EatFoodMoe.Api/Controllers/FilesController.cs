@@ -43,7 +43,7 @@ namespace EatFoodMoe.Api.Controllers
             }
 
             var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileName);
-            var fs = new FileStream(filePath,FileMode.Open);
+            var fs = new FileInfo(filePath);
             if (!Exists(filePath))
             {
                 return NotFound();
@@ -51,8 +51,9 @@ namespace EatFoodMoe.Api.Controllers
             var fileExtensionContentTypeProvider= new FileExtensionContentTypeProvider();
             if (fileExtensionContentTypeProvider.TryGetContentType(Path.GetExtension(filePath), out var contextType))
             {
+                //fa.fullname
                 return PhysicalFile(filePath, contextType);
-                //return new FileStreamResult(fs,fileName);
+                //return new FileStreamResult(fs.OpenRead(),contextType);
                
             }
 
