@@ -1,7 +1,9 @@
 ﻿using EatFoodMoe.Api.Entitles;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Threading.Tasks;
@@ -16,10 +18,10 @@ namespace EatFoodMoe.Api.Controllers
         private readonly IHostEnvironment _environment;
         private readonly IContentTypeProvider _contentTypeProvider;
 
-        public FilesController(IHostEnvironment environment, IContentTypeProvider contentTypeProvider)
+        public FilesController(IHostEnvironment environment, IServiceProvider serviceProvider)
         {
             _environment = environment;
-            _contentTypeProvider = contentTypeProvider;
+            _contentTypeProvider = serviceProvider.GetService<IContentTypeProvider>();
         }
 
         [HttpPost("file")]
@@ -41,14 +43,17 @@ namespace EatFoodMoe.Api.Controllers
             }
 
             var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileName);
+            var fs = new FileStream(filePath,FileMode.Open);
             if (!Exists(filePath))
             {
                 return NotFound();
             }
-
-            if (_contentTypeProvider.TryGetContentType(Path.GetExtension(filePath), out var contextType))
+            var fileExtensionContentTypeProvider= new FileExtensionContentTypeProvider();
+            if (fileExtensionContentTypeProvider.TryGetContentType(Path.GetExtension(filePath), out var contextType))
             {
-                return File(new FileStream(filePath, FileMode.Open), contextType);
+                return PhysicalFile(filePath, contextType);
+                //return new FileStreamResult(fs,fileName);
+               
             }
 
             return NotFound();
