@@ -10,8 +10,5 @@ namespace EatFoodMoe.Api.Entitles
     {
         public string Title { get; set; }
         public IFormFile File { get; set; }
-     
-
-
 }
 }
