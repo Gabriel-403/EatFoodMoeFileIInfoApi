@@ -16,12 +16,10 @@ namespace EatFoodMoe.Api.Controllers
     public class FilesController : ControllerBase
     {
         private readonly IHostEnvironment _environment;
-        private readonly IContentTypeProvider _contentTypeProvider;
 
-        public FilesController(IHostEnvironment environment, IServiceProvider serviceProvider)
+        public FilesController(IHostEnvironment environment)
         {
             _environment = environment;
-            _contentTypeProvider = serviceProvider.GetService<IContentTypeProvider>();
         }
 
         [HttpPost("file")]
@@ -51,10 +49,8 @@ namespace EatFoodMoe.Api.Controllers
             var fileExtensionContentTypeProvider= new FileExtensionContentTypeProvider();
             if (fileExtensionContentTypeProvider.TryGetContentType(Path.GetExtension(filePath), out var contextType))
             {
-                //fa.fullname
                 return PhysicalFile(filePath, contextType);
                 //return new FileStreamResult(fs.OpenRead(),contextType);
-               
             }
 
             return NotFound();
