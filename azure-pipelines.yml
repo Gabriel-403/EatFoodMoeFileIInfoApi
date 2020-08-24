@@ -24,6 +24,7 @@ stages:
         repository: 'chaosprogrammer/qiafan-moe-api'
         command: 'buildAndPush'
         Dockerfile: '**/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)'
         tags: |
           $(tag)
           lastest
