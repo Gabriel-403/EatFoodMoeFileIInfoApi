@@ -19,7 +19,6 @@ namespace EatFoodMoe.Api.Controllers
 
         public FilesController(IHostEnvironment environment)
         {
-
             _environment = environment;
         }
 
