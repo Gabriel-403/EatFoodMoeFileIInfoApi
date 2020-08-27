@@ -55,7 +55,11 @@ namespace EatFoodMoe.Api.Controllers
 
             return NotFound();
         }
-
+        [HttpGet]
+        public IActionResult FileSize([FromQuery][Required] int progress ) 
+        {
+            return Ok();
+        }
         
     }
 }
