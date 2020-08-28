@@ -58,7 +58,7 @@ namespace EatFoodMoe.Api.Controllers
         [HttpGet]
         public IActionResult FileSize([FromQuery][Required] int progress ) 
         {
-            return Ok();
+            return Ok(progress);
         }
         
     }
