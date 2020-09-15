@@ -1,11 +1,10 @@
 ﻿using EatFoodMoe.Api.Entitles;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using static System.IO.File;
 
@@ -25,6 +24,12 @@ namespace EatFoodMoe.Api.Controllers
         [HttpPost("file")]
         public async Task<IActionResult> UpLoad([FromForm] EatFoodIFilesInfo eatFoodIFilesInfo)
         {
+            var invalidFileNameChars = Path.GetInvalidFileNameChars();
+            if (eatFoodIFilesInfo.File.FileName.Any( c => invalidFileNameChars.Any(ic => ic == c)))
+            {
+                return Problem();
+            }
+
             var stream = eatFoodIFilesInfo.File.OpenReadStream();
             using var file = Create(Path.Combine(
                 _environment.ContentRootPath, "wwwroot", eatFoodIFilesInfo.File.FileName));
@@ -41,7 +46,7 @@ namespace EatFoodMoe.Api.Controllers
             }
 
             var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileName);
-            var fs = new FileInfo(filePath);
+
             if (!Exists(filePath))
             {
                 return NotFound();
