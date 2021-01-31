@@ -12,6 +12,10 @@ namespace EatFoodMoe.Api.Entitles
             Projects = new List<Project>();
         }
 
+        public Guid Id { get; set; }
+
+        public string Nmae { get; set; }
+
         public ICollection<Project> Projects { get; set; }
     }
 }

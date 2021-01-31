@@ -7,6 +7,7 @@ namespace EatFoodMoe.Api.Entitles
 {
     public class EatFoodFile
     {
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public string Path { get; set; }
         public bool Translation  { get; set; }
@@ -14,9 +15,8 @@ namespace EatFoodMoe.Api.Entitles
         public bool Proofreading { get; set; }
         public string Description { get; set; }
         public DateTimeOffset LastModityTIme { get; set; }
-        public string ProjectName { get; set; }
         public long FileSize { get; set; }
-
+        public Guid ProjectId { get; set; }
         public Project Project { get; set; }
     }
 }
