@@ -30,7 +30,13 @@ namespace EatFoodMoe.Api.Controllers
         [HttpPost("file")]
         public async Task<IActionResult> UpLoad([FromForm] EatFoodIFilesInfo eatFoodIFilesInfo)
         {
-            var invalidFileNameChars = Path.GetInvalidFileNameChars();
+            string projectid = eatFoodIFilesInfo.ProjectId ?? Const.Default.ProjectId;
+            if (Guid.TryParse(projectid, out var projectGuid) is false)
+            {
+                return Problem();
+            }
+
+            char[] invalidFileNameChars = Path.GetInvalidFileNameChars();
             if (eatFoodIFilesInfo.File.FileName.Any( c => invalidFileNameChars.Any(ic => ic == c)))
             {
                 return Problem();
@@ -47,7 +53,8 @@ namespace EatFoodMoe.Api.Controllers
                 Name = eatFoodIFilesInfo.File.FileName,
                 FileSize = new FileInfo(filePath).Length,
                 Path = filePath,
-                LastModityTIme = DateTime.UtcNow
+                LastModityTIme = DateTime.UtcNow,
+                ProjectId = projectGuid
             });
             _ = await _dbContext.SaveChangesAsync();
             return Ok();
@@ -56,8 +63,12 @@ namespace EatFoodMoe.Api.Controllers
         [HttpGet("file")]
         public async Task<IActionResult> Download([FromQuery][Required] string id)
         {
-            Guid guid = new Guid(id);
-            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(guid));
+            if (Guid.TryParse(id, out var fileGuid) is false)
+            {
+                return Problem();
+            }
+
+            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(fileGuid));
             if (fileInfo is null)
             {
                 return NotFound();
@@ -69,27 +80,34 @@ namespace EatFoodMoe.Api.Controllers
             {
                 return NotFound();
             }
+
             var fileExtensionContentTypeProvider= new FileExtensionContentTypeProvider();
-            if (fileExtensionContentTypeProvider.TryGetContentType(Path.GetExtension(filePath), out var contextType))
+            if (fileExtensionContentTypeProvider.TryGetContentType(
+                Path.GetExtension(filePath), out var contextType) is false)
             {
-                return PhysicalFile(filePath, contextType);
-                //return new FileStreamResult(fs.OpenRead(),contextType);
+                return NotFound();
             }
 
-            return NotFound();
+            return PhysicalFile(filePath, contextType);
         }
 
         [HttpDelete("file")]
         public async Task<IActionResult> DeleteFile([FromQuery][Required] string id)
         {
-            Guid guid = new Guid(id);
-            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(guid));
+            if (Guid.TryParse(id, out var fileGuid) is false)
+            {
+                return Problem();
+            }
+
+            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(fileGuid));
             if (fileInfo is null)
             {
                 return NotFound();
             }
+
             _dbContext.EatFoodFiles.Remove(fileInfo);
             _ = await _dbContext.SaveChangesAsync();
+
             Delete(fileInfo.Path);
             return Ok();
         }

@@ -22,27 +22,44 @@ namespace EatFoodMoe.Api.Controllers
             _dbContext = dbContext;
         }
 
-        [HttpGet("fileinfo")]
-        public async Task<ActionResult<EatFoodFile>> GetFileInfo([Required] string id)
+        [HttpGet("fileinfos")]
+        public async Task<ActionResult<IEnumerable<EatFoodFile>>> GetFileInfos()
         {
-            Guid guid = new Guid(id);
-            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(guid));
-            if (fileInfo is null)
-            {
-                return NotFound();
-            }
-            return fileInfo;
+            var fileInfos = await _dbContext.EatFoodFiles.ToListAsync();
+            return fileInfos;
         }
 
         [HttpGet("fileinfo")]
-        public async Task<ActionResult<EatFoodFile>> UpdateFileInfo([Required] string id, [FromQuery] EatFoodFile eatFoodFile)
+        public async Task<ActionResult<EatFoodFile>> GetFileInfo([Required] string id)
         {
-            Guid guid = new Guid(id);
-            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(guid));
+            if (Guid.TryParse(id, out var fileInfoGuid) is false)
+            {
+                return Problem();
+            }
+
+            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(fileInfoGuid));
             if (fileInfo is null)
             {
                 return NotFound();
             }
+
+            return fileInfo;
+        }
+
+        [HttpPut("fileinfo")]
+        public async Task<ActionResult<EatFoodFile>> UpdateFileInfo([Required] string id, [FromQuery] EatFoodFile eatFoodFile)
+        {
+            if (Guid.TryParse(id, out var fileInfoGuid) is false)
+            {
+                return Problem();
+            }
+
+            EatFoodFile fileInfo = await _dbContext.EatFoodFiles.FirstOrDefaultAsync(f => f.Id.Equals(fileInfoGuid));
+            if (fileInfo is null)
+            {
+                return NotFound();
+            }
+
             fileInfo.Translation = eatFoodFile.Translation;
             fileInfo.Embellishment = eatFoodFile.Embellishment;
             fileInfo.Proofreading = eatFoodFile.Proofreading;

@@ -9,6 +9,7 @@ namespace EatFoodMoe.Api.Controllers
     [Route("")]
     public class DefaultController : ControllerBase
     {
+        [HttpGet]
         public IActionResult Index()
         {
             return new JsonResult(new { message = "Welcoe to Qiafan-moe api." });

@@ -32,9 +32,13 @@ namespace EatFoodMoe.Api
 
             app.UseHttpsRedirection();
 
+            app.UseCors();
+
             app.UseRouting();
 
             app.UseStaticFiles();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

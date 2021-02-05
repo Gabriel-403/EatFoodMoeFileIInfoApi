@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace EatFoodMoe.Api.Entitles
@@ -9,6 +10,8 @@ namespace EatFoodMoe.Api.Entitles
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
+
+        [JsonIgnore]
         public string Path { get; set; }
         public bool Translation  { get; set; }
         public bool Embellishment { get; set; }
@@ -17,6 +20,8 @@ namespace EatFoodMoe.Api.Entitles
         public DateTimeOffset LastModityTIme { get; set; }
         public long FileSize { get; set; }
         public Guid ProjectId { get; set; }
+
+        [JsonIgnore]
         public Project Project { get; set; }
     }
 }

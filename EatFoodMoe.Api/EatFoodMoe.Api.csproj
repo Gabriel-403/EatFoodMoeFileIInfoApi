@@ -5,6 +5,7 @@
 		<ServerGarbageCollection>true</ServerGarbageCollection>
 		<UserSecretsId>aef75851-d380-45cf-911b-031cb4990c35</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<LangVersion>9.0</LangVersion>
 	</PropertyGroup>
 
 	<ProjectExtensions>

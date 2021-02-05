@@ -23,8 +23,8 @@ namespace EatFoodMoe.Api.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            var groupId = Guid.NewGuid();
-            var projectId = Guid.NewGuid();
+            var groupId = new Guid(Const.Default.GroupId);
+            var projectId = new Guid(Const.Default.ProjectId);
             builder.Entity<SinicizationGroup>().HasData(new SinicizationGroup[]
             {
                 new SinicizationGroup
