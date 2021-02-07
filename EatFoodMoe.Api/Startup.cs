@@ -10,6 +10,7 @@ namespace EatFoodMoe.Api
 {
     public class Startup
     {
+        readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -21,7 +22,15 @@ namespace EatFoodMoe.Api
         {
             services.AddControllers();
             services.AddDbContext<FileDbContext>(options => options.UseSqlite("Data Source=eat_food_db.sqlite3"));
-        }
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: MyAllowSpecificOrigins,
+                                  builder =>
+                                  {
+                                      builder.WithOrigins("http://localhost:3000", "http://localhost:3001");
+                                  });
+            });
+            }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
@@ -32,7 +41,7 @@ namespace EatFoodMoe.Api
 
             app.UseHttpsRedirection();
 
-            app.UseCors();
+            app.UseCors(MyAllowSpecificOrigins);
 
             app.UseRouting();
 

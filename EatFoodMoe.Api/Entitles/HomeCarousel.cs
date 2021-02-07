@@ -7,5 +7,10 @@ namespace EatFoodMoe.Api.Entitles
 {
     public class HomeCarousel
     {
+       public Guid id { get; set; }
+       public string Path { get; set; }
+      
+
+
     }
 }

@@ -59,7 +59,6 @@ namespace EatFoodMoe.Api.Controllers
             {
                 return NotFound();
             }
-
             fileInfo.Translation = eatFoodFile.Translation;
             fileInfo.Embellishment = eatFoodFile.Embellishment;
             fileInfo.Proofreading = eatFoodFile.Proofreading;
