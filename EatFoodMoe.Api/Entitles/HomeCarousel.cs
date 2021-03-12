@@ -9,8 +9,5 @@ namespace EatFoodMoe.Api.Entitles
     {
        public Guid id { get; set; }
        public string Path { get; set; }
-      
-
-
     }
 }

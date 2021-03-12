@@ -29,6 +29,8 @@ namespace EatFoodMoe.Api
             {
                 var fileDbContext = services.GetRequiredService<FileDbContext>();
                 fileDbContext.Database.Migrate();
+                var userDbContext = services.GetRequiredService<UserDbContext>();
+                userDbContext.Database.Migrate();
             }
             catch (Exception ex)
             {

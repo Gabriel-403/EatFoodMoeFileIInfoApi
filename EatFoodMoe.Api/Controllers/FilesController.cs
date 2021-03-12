@@ -42,20 +42,23 @@ namespace EatFoodMoe.Api.Controllers
                 return Problem();
             }
 
+            Guid fileGuid = Guid.NewGuid();
+
             using var stream = eatFoodIFilesInfo.File.OpenReadStream();
-            var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", eatFoodIFilesInfo.File.FileName);
+            var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileGuid.ToString());
             using var file = Create(filePath);
             await stream.CopyToAsync(file);
 
             await _dbContext.EatFoodFiles.AddAsync(new EatFoodFile
             {
-                Id = Guid.NewGuid(),
+                Id = fileGuid,
                 Name = eatFoodIFilesInfo.File.FileName,
                 FileSize = new FileInfo(filePath).Length,
                 Path = filePath,
                 LastModityTIme = DateTime.UtcNow,
                 ProjectId = projectGuid
             });
+
             _ = await _dbContext.SaveChangesAsync();
             return Ok();
         }
@@ -74,7 +77,7 @@ namespace EatFoodMoe.Api.Controllers
                 return NotFound();
             }
             // var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileInfo.Name);
-
+            var fileName = fileInfo.Name;
             var filePath = fileInfo.Path;
             if (Exists(filePath) is false)
             {
@@ -85,10 +88,10 @@ namespace EatFoodMoe.Api.Controllers
             if (fileExtensionContentTypeProvider.TryGetContentType(
                 Path.GetExtension(filePath), out var contextType) is false)
             {
-                return NotFound();
+                contextType = "application/octet-stream";
             }
 
-            return PhysicalFile(filePath, contextType);
+            return PhysicalFile(filePath, contextType, fileName);
         }
 
         [HttpDelete("file")]

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using IdentityServer4.Extensions;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,12 @@ namespace EatFoodMoe.Api.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            return new JsonResult(new { message = "Welcoe to Qiafan-moe api." });
+            string BaseUrl = $"{Request.Scheme}://{Request.Host}";
+            return new JsonResult( new { 
+                message = "Welcoe to Qiafan-moe api.",
+                file_infos = $"{BaseUrl}/api/fileInfos",
+                openid_configuration = $"{HttpContext.GetIdentityServerBaseUrl()}/.well-known/openid-configuration"
+            });
         }
     }
 }
