@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace EatFoodMoe.Api.Migrations
 {
-    public partial class IntialCreated : Migration
+    public partial class InitialCreated : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -17,6 +17,23 @@ namespace EatFoodMoe.Api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SinicizationGroup", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserMessages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    UserId = table.Column<string>(type: "TEXT", nullable: true),
+                    UserName = table.Column<string>(type: "TEXT", nullable: true),
+                    LastEditTime = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    Content = table.Column<string>(type: "TEXT", nullable: true),
+                    IsReply = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ReplyMessageId = table.Column<Guid>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserMessages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -92,6 +109,9 @@ namespace EatFoodMoe.Api.Migrations
         {
             migrationBuilder.DropTable(
                 name: "EatFoodFiles");
+
+            migrationBuilder.DropTable(
+                name: "UserMessages");
 
             migrationBuilder.DropTable(
                 name: "Projects");

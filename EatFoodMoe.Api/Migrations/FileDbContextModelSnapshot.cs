@@ -14,7 +14,7 @@ namespace EatFoodMoe.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.2");
+                .HasAnnotation("ProductVersion", "5.0.4");
 
             modelBuilder.Entity("EatFoodMoe.Api.Entitles.EatFoodFile", b =>
                 {
@@ -114,6 +114,35 @@ namespace EatFoodMoe.Api.Migrations
                             Id = new Guid("de04d32c-5f8b-4e24-95a4-40855d35a663"),
                             Nmae = "Unknowed"
                         });
+                });
+
+            modelBuilder.Entity("EatFoodMoe.Api.Entitles.UserMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsReply")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTimeOffset>("LastEditTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ReplyMessageId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserMessages");
                 });
 
             modelBuilder.Entity("EatFoodMoe.Api.Entitles.EatFoodFile", b =>

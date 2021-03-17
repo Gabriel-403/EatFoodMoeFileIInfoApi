@@ -1,11 +1,18 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using EatFoodMoe.Api.Data;
+using EatFoodMoe.Api.Extends;
 using EatFoodMoe.Api.Models;
+using IdentityServer4.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace EatFoodMoe.Api
@@ -31,12 +38,19 @@ namespace EatFoodMoe.Api
                 .AddEntityFrameworkStores<UserDbContext>()
                 .AddDefaultTokenProviders();
 
+            services.AddTransient<IClaimsService, EatFoodClaimService>();
+
             var builder = services.AddIdentityServer()
                 .AddInMemoryIdentityResources(Config.Ids)
                 .AddInMemoryApiScopes(Config.ApiScopes)
                 .AddInMemoryApiResources(Config.Apis)
                 .AddInMemoryClients(Config.Clients)
                 .AddAspNetIdentity<AppUser>();
+
+            services.Configure<IdentityOptions>(option =>
+            {
+                option.ClaimsIdentity.UserIdClaimType = ClaimTypes.NameIdentifier;
+            });
 
             if (HostEnvironment.IsDevelopment())
             {
@@ -45,18 +59,27 @@ namespace EatFoodMoe.Api
 
             services.AddCors(options =>
             {
-                options.AddPolicy(name: MyAllowSpecificOrigins, builder =>
+                options.AddPolicy(name: MyAllowSpecificOrigins, configure =>
                 {
-                    builder.WithOrigins("http://localhost:3000", "http://localhost:3001");
+                    configure.WithOrigins("http://localhost:3000", "http://localhost:3001");
+                    configure.AllowAnyHeader();
+                    configure.AllowAnyMethod();
                 });
             });
 
-            services.AddAuthentication().AddJwtBearer(options => 
+            services.AddAuthentication(options =>
+            {
+                options.DefaultSignInScheme = "Token";
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
             {
                 options.Authority = "https://localhost:5000";
                 options.Audience = "user_api";
-            });
-  
+                options.SaveToken = true;
+                options.MapInboundClaims = true;
+            }).AddCookie("token");
+
             services.AddAuthorization();
         }
 

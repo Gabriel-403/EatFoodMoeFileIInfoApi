@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System;
+using Microsoft.Extensions.Hosting;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace EatFoodMoe.Api.Controllers
 {
@@ -17,65 +18,128 @@ namespace EatFoodMoe.Api.Controllers
     {
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IHostEnvironment _environment;
 
-        public UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, IHostEnvironment environment)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _environment = environment;
         }
 
         [HttpGet("user")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize]
         public async Task<ActionResult<AppUser>> GetUser(string userName)
         {
-            var result = this.User.IsInRole("admin");
-            var user = await _userManager.FindByNameAsync(userName);
-            return Ok(user);
-        }
-
-        [HttpPost("role")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<ActionResult<AppUser>> AddUserToRole(string userName, string roleName)
-        {
-            var roleExist = await _roleManager.RoleExistsAsync(roleName);
-            if (roleExist is false)
+            if (userName is null)
             {
-                var identityResult = await _roleManager.CreateAsync(new IdentityRole { Name = roleName });
-                if (identityResult.Succeeded is false)
-                {
-                    return NotFound();
-                }
+                var result = await _userManager.GetUserAsync(User);
+                return Ok(result);
             }
 
-            var user = await _userManager.FindByNameAsync(userName);
-            var result = await _userManager.AddToRoleAsync(user, roleName);
-            if (result.Succeeded is false)
-            {
-                return NotFound();
-            }
+            AppUser user = await _userManager.FindByNameAsync(userName);
             return Ok(user);
         }
-
+        [Authorize]
         [HttpPost("user")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        
         public async Task<ActionResult<AppUser>> CreateUser([FromForm] CreateUserDto dto)
         {
-            var result = await _userManager.CreateAsync(new AppUser
+            string userName = dto.UserName;
+
+            IdentityResult result = await _userManager.CreateAsync(new AppUser
             {
-                UserName = dto.UserName
+                UserName = userName
             },dto.Password);
 
             if (result.Succeeded is false)
             {
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(error.Code, error.Description);
-                
-                }
-                return ValidationProblem(ModelState);
+                return IdentityValidationError(result.Errors);
             }
-            var user = await _userManager.FindByNameAsync(dto.UserName);
+
+            AppUser user = await _userManager.FindByNameAsync(dto.UserName);
+
+            string roleName = dto.RoleName;
+            if (roleName is not null)
+            {
+                return await AddUserToRole(userName, roleName);
+            }
+
+            string userDirPath = Path.Combine(_environment.ContentRootPath, "wwwroot", userName);
+            if (Directory.Exists(userDirPath) is false)
+            {
+                Directory.CreateDirectory(userDirPath);
+            }
+
             return Ok(user);
+        }
+
+        [HttpPost("role")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<AppUser>> AddUserToRole(string userName, string roleName)
+        {
+            bool roleExist = await _roleManager.RoleExistsAsync(roleName);
+            if (roleExist is false)
+            {
+                var role = new IdentityRole {Name = roleName};
+                IdentityResult roleCreateResult = await _roleManager.CreateAsync(role);
+                if (roleCreateResult.Succeeded is false)
+                {
+                    return IdentityValidationError(roleCreateResult.Errors);
+                }
+            }
+
+            AppUser user = await _userManager.FindByNameAsync(userName);
+            IdentityResult addToRoleResult = await _userManager.AddToRoleAsync(user, roleName);
+
+            if (addToRoleResult.Succeeded is false)
+            {
+                return IdentityValidationError(addToRoleResult.Errors);
+            }
+
+            return Ok(user);
+        }
+
+        [HttpDelete("role")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<AppUser>> RemoveUserFromRole(string userName, string roleName)
+        {
+            bool roleExist = await _roleManager.RoleExistsAsync(roleName);
+            if (roleExist is false)
+            {
+                return NotFound();
+            }
+
+            AppUser user = await _userManager.FindByNameAsync(userName);
+            IdentityResult addToRoleResult = await _userManager.RemoveFromRoleAsync(user, roleName);
+
+            if (addToRoleResult.Succeeded is false)
+            {
+                return IdentityValidationError(addToRoleResult.Errors);
+            }
+
+            return Ok(user);
+        }
+
+        [HttpPut("role")]
+        [Authorize(Roles = "admin")]
+        public async Task<ActionResult<AppUser>> ChangeRole(string userName, string oldRoleName, string roleName)
+        {
+            var actionResult = await RemoveUserFromRole(userName, oldRoleName);
+            if (actionResult.Result is IStatusCodeActionResult {StatusCode: not 200})
+            {
+                return actionResult;
+            }
+            return await AddUserToRole(userName, roleName);
+        }
+
+        private ActionResult IdentityValidationError(IEnumerable<IdentityError> identityErrors)
+        {
+            foreach (IdentityError error in identityErrors)
+            {
+                ModelState.AddModelError(error.Code, error.Description);
+            }
+            return ValidationProblem(ModelState);
         }
     }
 }

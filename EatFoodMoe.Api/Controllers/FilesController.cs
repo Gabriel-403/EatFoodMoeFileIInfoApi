@@ -9,8 +9,10 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using static System.IO.File;
-
+using IdentityModel;
+using IdentityServer4.Extensions;
 
 namespace EatFoodMoe.Api.Controllers
 {
@@ -28,25 +30,28 @@ namespace EatFoodMoe.Api.Controllers
         }
 
         [HttpPost("file")]
+        [Authorize]
         public async Task<IActionResult> UpLoad([FromForm] EatFoodIFilesInfo eatFoodIFilesInfo)
         {
-            string projectid = eatFoodIFilesInfo.ProjectId ?? Const.Default.ProjectId;
-            if (Guid.TryParse(projectid, out var projectGuid) is false)
+            string userName = User.GetDisplayName();
+
+            string projectId = eatFoodIFilesInfo.ProjectId ?? Const.Default.ProjectId;
+            if (Guid.TryParse(projectId, out Guid projectGuid) is false)
             {
                 return Problem();
             }
 
             char[] invalidFileNameChars = Path.GetInvalidFileNameChars();
-            if (eatFoodIFilesInfo.File.FileName.Any( c => invalidFileNameChars.Any(ic => ic == c)))
+            if (eatFoodIFilesInfo.File.FileName.Any(c => invalidFileNameChars.Any(ic => ic == c)))
             {
                 return Problem();
             }
 
-            Guid fileGuid = Guid.NewGuid();
+            var fileGuid = Guid.NewGuid();
 
-            using var stream = eatFoodIFilesInfo.File.OpenReadStream();
-            var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileGuid.ToString());
-            using var file = Create(filePath);
+            await using Stream stream = eatFoodIFilesInfo.File.OpenReadStream();
+            string filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", userName, fileGuid.ToString());
+            await using FileStream file = Create(filePath);
             await stream.CopyToAsync(file);
 
             await _dbContext.EatFoodFiles.AddAsync(new EatFoodFile
@@ -64,9 +69,10 @@ namespace EatFoodMoe.Api.Controllers
         }
 
         [HttpGet("file")]
+        
         public async Task<IActionResult> Download([FromQuery][Required] string id)
         {
-            if (Guid.TryParse(id, out var fileGuid) is false)
+            if (Guid.TryParse(id, out Guid fileGuid) is false)
             {
                 return Problem();
             }
@@ -76,9 +82,9 @@ namespace EatFoodMoe.Api.Controllers
             {
                 return NotFound();
             }
-            // var filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileInfo.Name);
-            var fileName = fileInfo.Name;
-            var filePath = fileInfo.Path;
+
+            string fileName = fileInfo.Name;
+            string filePath = fileInfo.Path;
             if (Exists(filePath) is false)
             {
                 return NotFound();
@@ -86,7 +92,7 @@ namespace EatFoodMoe.Api.Controllers
 
             var fileExtensionContentTypeProvider= new FileExtensionContentTypeProvider();
             if (fileExtensionContentTypeProvider.TryGetContentType(
-                Path.GetExtension(filePath), out var contextType) is false)
+                Path.GetExtension(filePath), out string contextType) is false)
             {
                 contextType = "application/octet-stream";
             }
@@ -95,9 +101,10 @@ namespace EatFoodMoe.Api.Controllers
         }
 
         [HttpDelete("file")]
+        [Authorize]
         public async Task<IActionResult> DeleteFile([FromQuery][Required] string id)
         {
-            if (Guid.TryParse(id, out var fileGuid) is false)
+            if (Guid.TryParse(id, out Guid fileGuid) is false)
             {
                 return Problem();
             }

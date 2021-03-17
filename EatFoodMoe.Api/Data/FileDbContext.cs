@@ -21,6 +21,8 @@ namespace EatFoodMoe.Api.Data
 
         public DbSet<SinicizationGroup> SinicizationGroup { get; set; }
 
+        public DbSet<UserMessage> UserMessages { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             var groupId = new Guid(Const.Default.GroupId);

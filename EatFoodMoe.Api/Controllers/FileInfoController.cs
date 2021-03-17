@@ -1,5 +1,6 @@
 ﻿using EatFoodMoe.Api.Data;
 using EatFoodMoe.Api.Entitles;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -20,7 +21,9 @@ namespace EatFoodMoe.Api.Controllers
             _dbContext = dbContext;
         }
 
+        
         [HttpGet("fileinfos")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<IEnumerable<EatFoodFile>>> GetFileInfos()
         {
             var fileInfos = await _dbContext.EatFoodFiles.ToListAsync();
@@ -28,6 +31,7 @@ namespace EatFoodMoe.Api.Controllers
         }
 
         [HttpGet("fileinfo")]
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<EatFoodFile>> GetFileInfo([Required] string id)
         {
             if (Guid.TryParse(id, out var fileInfoGuid) is false)

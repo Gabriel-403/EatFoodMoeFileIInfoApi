@@ -3,6 +3,7 @@ using IdentityServer4.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace EatFoodMoe.Api
@@ -13,10 +14,15 @@ namespace EatFoodMoe.Api
             new IdentityResource[]
             {
                 new IdentityResources.OpenId(),
-                new IdentityResources.Profile()
+                new IdentityResources.Profile(),
+                new IdentityResource{
+                    Name = "role", DisplayName = "role",
+                    UserClaims = new []
+                    {
+                        "role", ClaimTypes.Role
+                    }
+                }
             };
-
-
         public static IEnumerable<ApiResource> Apis =>
             new[]
             {
@@ -47,13 +53,17 @@ namespace EatFoodMoe.Api
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPasswordAndClientCredentials,
                     ClientSecrets = { new Secret("511536EF-F270-4058-80CA-1C89C192F69A".Sha256()) },
 
-                    AllowedScopes = { 
+                    //ClientUri = "http://localhost:3000",
+
+                    //AllowedCorsOrigins = { "http://localhost:3000" },
+
+                    AllowedScopes = {
                         IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile, 
-                        "user_api" 
+                        IdentityServerConstants.StandardScopes.Profile,
+                        "user_api",
+                        "role"
                     },
                 },
-
             };
     }
 }
