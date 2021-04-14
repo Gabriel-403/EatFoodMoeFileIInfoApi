@@ -19,6 +19,7 @@ namespace EatFoodMoe.Api.Entitles
         public string Description { get; set; }
         public DateTimeOffset LastModityTIme { get; set; }
         public long FileSize { get; set; }
+        public string UserId { get; set; }
         public Guid ProjectId { get; set; }
 
         [JsonIgnore]

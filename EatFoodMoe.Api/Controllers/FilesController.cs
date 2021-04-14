@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Authorization;
 using static System.IO.File;
 using IdentityModel;
 using IdentityServer4.Extensions;
+using Microsoft.AspNetCore.Identity;
+using EatFoodMoe.Api.Models;
 
 namespace EatFoodMoe.Api.Controllers
 {
@@ -20,11 +22,13 @@ namespace EatFoodMoe.Api.Controllers
     [ApiController]
     public class FilesController : ControllerBase
     {
+        private readonly UserManager<AppUser> _userManager;
         private readonly IHostEnvironment _environment;
         private readonly FileDbContext _dbContext;
 
-        public FilesController(IHostEnvironment environment, FileDbContext dbContext)
+        public FilesController(UserManager<AppUser> userManager, IHostEnvironment environment, FileDbContext dbContext)
         {
+            _userManager = userManager;
             _environment = environment;
             _dbContext = dbContext;
         }
@@ -33,7 +37,7 @@ namespace EatFoodMoe.Api.Controllers
         [Authorize]
         public async Task<IActionResult> UpLoad([FromForm] EatFoodIFilesInfo eatFoodIFilesInfo)
         {
-            string userName = User.GetDisplayName();
+            string userId = _userManager.GetUserId(User);
 
             string projectId = eatFoodIFilesInfo.ProjectId ?? Const.Default.ProjectId;
             if (Guid.TryParse(projectId, out Guid projectGuid) is false)
@@ -50,7 +54,8 @@ namespace EatFoodMoe.Api.Controllers
             var fileGuid = Guid.NewGuid();
 
             await using Stream stream = eatFoodIFilesInfo.File.OpenReadStream();
-            string filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", userName, fileGuid.ToString());
+            string filePath = Path.Combine(_environment.ContentRootPath, "wwwroot", fileGuid.ToString());
+
             await using FileStream file = Create(filePath);
             await stream.CopyToAsync(file);
 
@@ -61,6 +66,7 @@ namespace EatFoodMoe.Api.Controllers
                 FileSize = new FileInfo(filePath).Length,
                 Path = filePath,
                 LastModityTIme = DateTime.UtcNow,
+                UserId = userId,
                 ProjectId = projectGuid
             });
 

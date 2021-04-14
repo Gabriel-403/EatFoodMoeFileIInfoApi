@@ -9,6 +9,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace EatFoodMoe.Api.Controllers
 {
@@ -26,10 +29,31 @@ namespace EatFoodMoe.Api.Controllers
             _roleManager = roleManager;
             _environment = environment;
         }
+        [HttpGet("myuser")]
+        public async Task<ActionResult<AppUser>> GetMyuser()
+        {
+            var result = await _userManager.GetUserAsync(User);
+            return Ok(result);
+        }
 
+        [HttpGet("users")]
+        [Authorize(Roles = "admin")]
+        public  async Task<ActionResult<AppUser>> GetUsers()
+        {
+            
+            var users = await _userManager.Users.ToListAsync();
+            return Ok(users.Select(u=>
+            new
+            {
+                user = u.UserName,
+                roles = _userManager.GetRolesAsync(u).Result,
+                islogin= "否"
+            }));
+        }
+      
         [HttpGet("user")]
         [Authorize]
-        public async Task<ActionResult<AppUser>> GetUser(string userName)
+        public async Task<ActionResult<AppUser>> GetUser([Required] string userName)
         {
             if (userName is null)
             {
@@ -42,7 +66,6 @@ namespace EatFoodMoe.Api.Controllers
         }
         [Authorize]
         [HttpPost("user")]
-        
         public async Task<ActionResult<AppUser>> CreateUser([FromForm] CreateUserDto dto)
         {
             string userName = dto.UserName;
@@ -64,15 +87,28 @@ namespace EatFoodMoe.Api.Controllers
             {
                 return await AddUserToRole(userName, roleName);
             }
-
-            string userDirPath = Path.Combine(_environment.ContentRootPath, "wwwroot", userName);
-            if (Directory.Exists(userDirPath) is false)
-            {
-                Directory.CreateDirectory(userDirPath);
-            }
-
+            await AddUserToRole(userName, "Audience");
             return Ok(user);
         }
+        [Authorize(Roles ="admin")]
+        [HttpDelete("user")]
+        public async Task<ActionResult<AppUser>> DeleteUser( string userName,string roleName) 
+        { 
+            AppUser user = await _userManager.FindByNameAsync(userName);
+            if (roleName == "admin")
+            {
+
+                return Forbid();
+            }
+            IdentityResult result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded is false) 
+            {
+                return IdentityValidationError(result.Errors);
+            }
+            return Ok();
+
+        }
+
 
         [HttpPost("role")]
         [Authorize(Roles = "admin")]
@@ -100,6 +136,8 @@ namespace EatFoodMoe.Api.Controllers
             return Ok(user);
         }
 
+
+
         [HttpDelete("role")]
         [Authorize(Roles = "admin")]
         public async Task<ActionResult<AppUser>> RemoveUserFromRole(string userName, string roleName)
@@ -111,12 +149,17 @@ namespace EatFoodMoe.Api.Controllers
             }
 
             AppUser user = await _userManager.FindByNameAsync(userName);
-            IdentityResult addToRoleResult = await _userManager.RemoveFromRoleAsync(user, roleName);
+            if (roleName=="admin") {
 
-            if (addToRoleResult.Succeeded is false)
-            {
-                return IdentityValidationError(addToRoleResult.Errors);
+                return Forbid();
             }
+            IdentityResult deletToRoleResult = await _userManager.RemoveFromRoleAsync(user, roleName);
+
+            if (deletToRoleResult.Succeeded is false)
+            {
+                return IdentityValidationError(deletToRoleResult.Errors);
+            }
+           
 
             return Ok(user);
         }
@@ -125,6 +168,11 @@ namespace EatFoodMoe.Api.Controllers
         [Authorize(Roles = "admin")]
         public async Task<ActionResult<AppUser>> ChangeRole(string userName, string oldRoleName, string roleName)
         {
+            if (oldRoleName == "admin")
+            {
+
+                return Forbid();
+            }
             var actionResult = await RemoveUserFromRole(userName, oldRoleName);
             if (actionResult.Result is IStatusCodeActionResult {StatusCode: not 200})
             {
